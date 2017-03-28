@@ -88,7 +88,7 @@ def doAddBalance(params, user):
 
     user.balance += amount
 
-    speech = "Successfully added " + amount + " to your balance. Your balance is now " + user.balance
+    speech = "Successfully added {} to your balance. Your balance is now {}".format(amount, user.balance)
 
     return makeResponse(speech)
 
@@ -103,11 +103,11 @@ def doCharge(params, user):
         return {}
 
     if user.balance < amount:
-        speech = "Sorry but your balance " + user.balance + " is insufficient for this charge"
+        speech = "Sorry but your balance {} is insufficient for this charge".format(user.balance)
     else:
         user.balance -= amount
         user.credit += amount
-        speech = "Successfully charged " + amount + " to your credit. Your credit is now " + user.credit
+        speech = "Successfully charged {} to your credit. Your credit is now {}".format(amount, user.credit)
 
     return makeResponse(speech)
 
