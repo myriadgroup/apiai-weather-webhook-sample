@@ -24,6 +24,7 @@ class User:
     def __init__(self, userId):
         self.id = userId
         self.balance = 0.0
+        self.credit = 0.0
 
 def getUser(userId):
     user = allUsers.get(userId)
@@ -39,7 +40,8 @@ def webhook():
     print("Request:")
     print(json.dumps(req, indent=4))
 
-    userId = req.get("originalRequest").get("data").get("user").get("user_id")
+    #userId = req.get("originalRequest").get("data").get("user").get("user_id")
+    userId = req.get("sessionId")
     if userId is None:
         return {}
 
@@ -59,6 +61,8 @@ def processRequest(req, user):
     params = req.get("result").get("parameters")
     if action == "addBalance":
         return doAddBalance(params, user)
+    elif action == "charge":
+        return doCharge(params, user)
 
     if req.get("result").get("action") != "yahooWeatherForecast":
         return {}
@@ -86,6 +90,29 @@ def doAddBalance(params, user):
 
     speech = "Successfully added " + amount + " to your balance. Your balance is now " + user.balance
 
+    return makeResponse(speech)
+
+
+def doCharge(params, user):
+    unitCurrency = params.get("unit-currency")
+    if unitCurrency is None:
+        return {}
+
+    amount = float(unitCurrency.get("amount"))
+    if amount <= 0:
+        return {}
+
+    if user.balance < amount:
+        speech = "Sorry but your balance " + user.balance + " is insufficient for this charge"
+    else:
+        user.balance -= amount
+        user.credit += amount
+        speech = "Successfully charged " + amount + " to your credit. Your credit is now " + user.credit
+
+    return makeResponse(speech)
+
+
+def makeResponse(speech):
     print("Response:")
     print(speech)
 
@@ -94,7 +121,7 @@ def doAddBalance(params, user):
         "displayText": speech,
         # "data": data,
         # "contextOut": [],
-        "source": "apiai-money-webhook-demo"
+        "source": "myriad-assistant-demo-webhook"
     }
 
 
