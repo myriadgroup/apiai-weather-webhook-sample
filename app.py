@@ -18,6 +18,19 @@ from flask import make_response
 # Flask app should start in global layout
 app = Flask(__name__)
 
+allUsers = dict()
+
+class User:
+    def __init__(self, userId):
+        self.id = userId
+        self.balance = 0.0
+
+def getUser(userId):
+    user = allUsers.get(userId)
+    if user is None:
+        user = User(userId)
+        allUsers[userId] = user
+    return user
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
@@ -26,7 +39,13 @@ def webhook():
     print("Request:")
     print(json.dumps(req, indent=4))
 
-    res = processRequest(req)
+    userId = req.get("originalRequest").get("data").get("user").get("user_id")
+    if userId is None:
+        return {}
+
+    user = getUser(userId)
+
+    res = processRequest(req, user)
 
     res = json.dumps(res, indent=4)
     # print(res)
@@ -35,7 +54,12 @@ def webhook():
     return r
 
 
-def processRequest(req):
+def processRequest(req, user):
+    action = req.get("result").get("action")
+    params = req.get("result").get("parameters")
+    if action == "addBalance":
+        return doAddBalance(params, user)
+
     if req.get("result").get("action") != "yahooWeatherForecast":
         return {}
     baseurl = "https://query.yahooapis.com/v1/public/yql?"
@@ -47,6 +71,31 @@ def processRequest(req):
     data = json.loads(result)
     res = makeWebhookResult(data)
     return res
+
+
+def doAddBalance(params, user):
+    unitCurrency = params.get("unit-currency")
+    if unitCurrency is None:
+        return {}
+
+    amount = float(unitCurrency.get("amount"))
+    if amount <= 0:
+        return {}
+
+    user.balance += amount
+
+    speech = "Successfully added " + amount + " to your balance. Your balance is now " + user.balance
+
+    print("Response:")
+    print(speech)
+
+    return {
+        "speech": speech,
+        "displayText": speech,
+        # "data": data,
+        # "contextOut": [],
+        "source": "apiai-money-webhook-demo"
+    }
 
 
 def makeYqlQuery(req):
