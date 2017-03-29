@@ -61,8 +61,12 @@ def processRequest(req, user):
     params = req.get("result").get("parameters")
     if action == "addBalance":
         return doAddBalance(params, user)
+    elif action == "showBalance":
+        return doShowBalance(params, user)
     elif action == "charge":
         return doCharge(params, user)
+    elif action == "showCredit":
+        return doShowCredit(params, user)
 
     if req.get("result").get("action") != "yahooWeatherForecast":
         return {}
@@ -93,6 +97,12 @@ def doAddBalance(params, user):
     return makeResponse(speech)
 
 
+def doShowBalance(params, user):
+    speech = "Sure. Your current balance is {}".format(user.balance)
+
+    return makeResponse(speech)
+
+
 def doCharge(params, user):
     unitCurrency = params.get("unit-currency")
     if unitCurrency is None:
@@ -108,6 +118,12 @@ def doCharge(params, user):
         user.balance -= amount
         user.credit += amount
         speech = "Successfully charged {} to your credit. Your credit is now {}".format(amount, user.credit)
+
+    return makeResponse(speech)
+
+
+def doShowCredit(params, user):
+    speech = "Your current credit is {}".format(user.credit)
 
     return makeResponse(speech)
 
