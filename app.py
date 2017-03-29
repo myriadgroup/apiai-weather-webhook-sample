@@ -87,12 +87,10 @@ def extractCurrencyAmount(params):
         return None
 
     try:
-        return float(unitCurrency)
-    except ValueError:
-        pass
-
-    try:
-        return float(unitCurrency.get("amount"))
+        if isinstance(unitCurrency, basestring):
+            return float(unitCurrency)
+        else:
+            return float(unitCurrency.get("amount"))
     except ValueError:
         return None
 
