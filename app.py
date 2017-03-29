@@ -81,13 +81,25 @@ def processRequest(req, user):
     return res
 
 
-def doAddBalance(params, user):
+def extractCurrencyAmount(params):
     unitCurrency = params.get("unit-currency")
     if unitCurrency is None:
-        return {}
+        return None
 
-    amount = float(unitCurrency.get("amount"))
-    if amount <= 0:
+    try:
+        return float(unitCurrency.get("amount"))
+    except ValueError:
+        pass
+
+    try:
+        return float(unitCurrency)
+    except ValueError:
+        return None
+
+
+def doAddBalance(params, user):
+    amount = extractCurrencyAmount(params)
+    if amount is None:
         return {}
 
     user.balance += amount
@@ -104,12 +116,8 @@ def doShowBalance(params, user):
 
 
 def doCharge(params, user):
-    unitCurrency = params.get("unit-currency")
-    if unitCurrency is None:
-        return {}
-
-    amount = float(unitCurrency.get("amount"))
-    if amount <= 0:
+    amount = extractCurrencyAmount(params)
+    if amount is None:
         return {}
 
     if user.balance < amount:
